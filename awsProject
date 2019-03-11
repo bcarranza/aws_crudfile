@@ -202,8 +202,11 @@
             "Type": "AWS::EC2::Subnet",
             "Properties": {
                 "VpcId": {
-                    "Ref": "EC2VPC4ZWKA"
-                }
+                    "Ref": "myVPC",
+                },
+                "CidrBlock" : "10.0.0.0/24",
+                "AvailabilityZone" : "us-east-1a",
+                "Tags" : [ { "Key" : "foo", "Value" : "bar" } ]
             },
             "Metadata": {
                 "AWS::CloudFormation::Designer": {
@@ -224,8 +227,11 @@
             "Type": "AWS::EC2::Subnet",
             "Properties": {
                 "VpcId": {
-                    "Ref": "EC2VPC4ZWKA"
-                }
+                    "Ref": "myVPC"
+                },
+                "CidrBlock" : "10.0.0.0/24",
+                "AvailabilityZone" : "us-east-1a",
+                "Tags" : [ { "Key" : "foo", "Value" : "bar" } ]
             },
             "Metadata": {
                 "AWS::CloudFormation::Designer": {
@@ -239,10 +245,12 @@
                 "NetworkInterfaces": [
                     {
                         "SubnetId": {
-                            "Ref": "EC2S14YPM"
+                            "Ref": "mySubnet1"
                         }
                     }
-                ]
+                ],
+                "ImageId" : "ami-0a313d6098716f372",
+                "KeyName" : "myInstance1"
             },
             "Metadata": {
                 "AWS::CloudFormation::Designer": {
@@ -256,10 +264,12 @@
                 "NetworkInterfaces": [
                     {
                         "SubnetId": {
-                            "Ref": "EC2SRNBR"
+                            "Ref": "mySubnet2"
                         }
                     }
-                ]
+                ],
+                "ImageId" : "ami-0a313d6098716f372",
+                "KeyName" : "myInstance2"
             },
             "Metadata": {
                 "AWS::CloudFormation::Designer": {
