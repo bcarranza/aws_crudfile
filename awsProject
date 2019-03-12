@@ -180,9 +180,16 @@
         }
     },
     "Resources": {
+
         "myVPC": {
             "Type": "AWS::EC2::VPC",
-            "Properties": {},
+            "Properties": {
+                "CidrBlock" : "10.0.0.0/16",
+                "EnableDnsSupport" : "false",
+                "EnableDnsHostnames" : "false",
+                "InstanceTenancy" : "dedicated",
+                "Tags" : [ {"Key" : "foo", "Value" : "bar"} ]
+            },
             "Metadata": {
                 "AWS::CloudFormation::Designer": {
                     "id": "44d4f9ed-d2a6-48aa-9a01-ec82f52eb6de"
@@ -216,7 +223,14 @@
         },
         "myElasticLoadBalancing": {
             "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
-            "Properties": {},
+            "Properties": {
+                "AvailabilityZones" : { "Fn::GetAZs" : "" },
+                "Listeners": [{
+                    "LoadBalancerPort": "80",
+                    "InstancePort": "80",
+                    "Protocol": "HTTP"
+                }],
+            },
             "Metadata": {
                 "AWS::CloudFormation::Designer": {
                     "id": "c5ad24f2-221c-4e0b-9f35-f2b50584cb0d"
@@ -239,6 +253,16 @@
                 }
             }
         },
+        "myDBSubnetGroup" : {
+           "Type" : "AWS::RDS::DBSubnetGroup",
+           "Properties" : {
+            "DBSubnetGroupDescription" : "subnet group para base de datos",
+              "SubnetIds" : [
+                  "mySubnet1",
+                  "mySubnet2"
+              ],
+           }
+        },
         "myInstance1": {
             "Type": "AWS::EC2::Instance",
             "Properties": {
@@ -250,7 +274,8 @@
                     }
                 ],
                 "ImageId" : "ami-0a313d6098716f372",
-                "KeyName" : "myInstance1"
+                "KeyName" : "myInstance1",
+                "InstanceType": "t2.micro"
             },
             "Metadata": {
                 "AWS::CloudFormation::Designer": {
@@ -269,7 +294,8 @@
                     }
                 ],
                 "ImageId" : "ami-0a313d6098716f372",
-                "KeyName" : "myInstance2"
+                "KeyName" : "myInstance2",
+                "InstanceType": "t2.micro"
             },
             "Metadata": {
                 "AWS::CloudFormation::Designer": {
@@ -297,16 +323,52 @@
         },
         "myRDSDb": {
             "Type": "AWS::RDS::DBInstance",
-            "Properties": {},
+            "Properties": {
+                "DBName" : "fileUploadDb",
+                "AllocatedStorage" : "100",
+                "DBInstanceClass" : "db.m1.small",
+                "Engine" : "MySQL",
+                "EngineVersion" : "5.6.13",
+                "Iops" : "1000",
+                "MasterUsername" : "userFileUpload",
+                "MasterUserPassword" : "passFileUpload",
+                "DBSubnetGroupName":"myDBSubnetGroup"
+            },
             "Metadata": {
                 "AWS::CloudFormation::Designer": {
                     "id": "2e894242-f7bf-40e4-bca0-f58dd6323201"
                 }
             }
         },
+        "myLambdaExecutionRole": {
+          "Type": "AWS::IAM::Role",
+          "Properties": {
+            "AssumeRolePolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [{
+                "Effect": "Allow",
+                "Principal": { "Service": ["lambda.amazonaws.com"] },
+                "Action": ["sts:AssumeRole"]
+              }]
+            },
+            "ManagedPolicyArns": ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
+          }
+        },
         "myLambda": {
             "Type": "AWS::Lambda::Function",
-            "Properties": {},
+            "Properties": {
+                "Handler": "index.handler",
+                "Role": { "Fn::GetAtt" : ["myLambdaExecutionRole", "Arn"] },
+                "Code": {
+                  "S3Bucket": "lambda-functions",
+                  "S3Key": "amilookup.zip"
+                },
+                "Runtime": "nodejs8.10",
+                "Timeout": 25,
+                "TracingConfig": {
+                  "Mode": "Active"
+               }
+            },
             "Metadata": {
                 "AWS::CloudFormation::Designer": {
                     "id": "e6ceb136-5f61-4501-82ff-e8c05e2bae94"
