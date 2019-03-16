@@ -1,11 +1,26 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
+    "Mappings": {
+		"SubnetConfig": {
+			"VPC": {
+				"CIDR": "10.101.0.0/16"
+			},
+			"Public": {
+				"CIDR": "10.101.1.0/24"
+			},
+			"Private": {
+				"CIDR": "10.101.64.0/18"
+			}
+		}
+	},
     "Resources": {
 
         "myVPC": {
             "Type": "AWS::EC2::VPC",
             "Properties": {
-                "CidrBlock" : "10.0.0.0/16",
+                "CidrBlock": {
+					"Fn::FindInMap": ["SubnetConfig", "VPC", "CIDR"]
+				},
                 "InstanceTenancy" : "default",
                 "Tags" : [ {"Key" : "foo", "Value" : "bar"} ]
             }
@@ -14,18 +29,78 @@
             "Type": "AWS::EC2::InternetGateway",
             "Properties": {}
         },
-        "mySubnet1": {
-            "Type": "AWS::EC2::Subnet",
-            "Properties": {
-                "VpcId": {
-                    "Ref": "myVPC",
-                },
-                "CidrBlock" : "10.0.0.0/24",
-                "AvailabilityZone" : "us-east-1a",
-                "Tags" : [ { "Key" : "foo", "Value" : "bar" } ]
-            }
-        },
+        "pubSubnet1": {
+			"DependsOn": ["myVPC"],
+			"Type": "AWS::EC2::Subnet",
+			"Properties": {
+				"VpcId": {
+					"Ref": "myVPC"
+				},
+				"MapPublicIpOnLaunch": false,
+				"CidrBlock": {
+					"Fn::FindInMap": ["SubnetConfig", "Public", "CIDR"]
+				}
+			}
+		},
+		"privSubnet1": {
+			"DependsOn": ["myVPC", "pubSubnet1"],
+			"Type": "AWS::EC2::Subnet",
+			"Properties": {
+				"VpcId": {
+					"Ref": "myVPC"
+				},
+				"AvailabilityZone": {
+					"Fn::GetAtt": ["pubSubnet1", "AvailabilityZone"]
+				},
+				"MapPublicIpOnLaunch": false,
+				"CidrBlock": {
+					"Fn::FindInMap": ["SubnetConfig", "Private", "CIDR"]
+				}
+			}
+		},
+        
+        "pubSubnet2": {
+			"DependsOn": ["myVPC"],
+			"Type": "AWS::EC2::Subnet",
+			"Properties": {
+				"VpcId": {
+					"Ref": "myVPC"
+				},
+				"MapPublicIpOnLaunch": false,
+				"CidrBlock": {
+					"Fn::FindInMap": ["SubnetConfig", "Public", "CIDR"]
+				}
+			}
+		},
+		"privSubnet2": {
+			"DependsOn": ["myVPC", "pubSubnet2"],
+			"Type": "AWS::EC2::Subnet",
+			"Properties": {
+				"VpcId": {
+					"Ref": "myVPC"
+				},
+				"AvailabilityZone": {
+					"Fn::GetAtt": ["pubSubnet2", "AvailabilityZone"]
+				},
+				"MapPublicIpOnLaunch": false,
+				"CidrBlock": {
+					"Fn::FindInMap": ["SubnetConfig", "Private", "CIDR"]
+				}
+			}
+		},
+
+        "privRouteTable": {
+			"DependsOn": ["myVPC"],
+			"Type": "AWS::EC2::RouteTable",
+			"Properties": {
+				"VpcId": {
+					"Ref": "myVPC"
+				}
+			}
+		},
+
         "myElasticLoadBalancing": {
+            "DependsOn": ["myVPC"],
             "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
             "Properties": {
                 "AvailabilityZones" : { "Fn::GetAZs" : "" },
@@ -33,29 +108,8 @@
                     "LoadBalancerPort": "80",
                     "InstancePort": "80",
                     "Protocol": "HTTP"
-                }],
+                }]
             }
-        },
-        "mySubnet2": {
-            "Type": "AWS::EC2::Subnet",
-            "Properties": {
-                "VpcId": {
-                    "Ref": "myVPC"
-                },
-                "CidrBlock" : "10.0.0.0/24",
-                "AvailabilityZone" : "us-east-1a",
-                "Tags" : [ { "Key" : "foo", "Value" : "bar" } ]
-            }
-        },
-        "myDBSubnetGroup" : {
-           "Type" : "AWS::RDS::DBSubnetGroup",
-           "Properties" : {
-            "DBSubnetGroupDescription" : "subnet group para base de datos",
-              "SubnetIds" : [
-                  "mySubnet1",
-                  "mySubnet2"
-              ],
-           }
         },
         "myInstance1": {
             "Type": "AWS::EC2::Instance",
@@ -63,7 +117,7 @@
                 "NetworkInterfaces": [
                     {
                         "SubnetId": {
-                            "Ref": "mySubnet1"
+                            "Ref": "pubSubnet1"
                         }
                     }
                 ],
@@ -78,7 +132,7 @@
                 "NetworkInterfaces": [
                     {
                         "SubnetId": {
-                            "Ref": "mySubnet2"
+                            "Ref": "pubSubnet2"
                         }
                     }
                 ],
@@ -100,14 +154,12 @@
             "Properties": {
                 "DBName" : "fileUploadDb",
                 "AllocatedStorage" : "100",
-                "DBInstanceClass" : "db.m1.small",
+                "DBInstanceClass" : "db.t3.micro",
                 "Engine" : "MySQL",
-                "EngineVersion" : "5.6.13",
-                "Iops" : "1000",
                 "MasterUsername" : "userFileUpload",
-                "MasterUserPassword" : "passFileUpload",
-                "DBSubnetGroupName":"myDBSubnetGroup"
-            }
+                "MasterUserPassword" : "passFileUpload"
+            },
+            "DependsOn": ["myVPC"]
         },
         "myLambdaExecutionRole": {
           "Type": "AWS::IAM::Role",
