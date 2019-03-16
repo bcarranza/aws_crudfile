@@ -1,29 +1,17 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Mappings": {
-		"SubnetConfig": {
-			"VPC": {
-				"CIDR": "10.101.0.0/16"
-			},
-			"Public": {
-				"CIDR": "10.101.1.0/24"
-			},
-			"Private": {
-				"CIDR": "10.101.64.0/18"
-			}
-		}
-	},
+    
     "Resources": {
 
         "myVPC": {
-            "Type": "AWS::EC2::VPC",
-            "Properties": {
-                "CidrBlock": {
-					"Fn::FindInMap": ["SubnetConfig", "VPC", "CIDR"]
-				},
-                "InstanceTenancy" : "default",
-                "Tags" : [ {"Key" : "foo", "Value" : "bar"} ]
-            }
+            "VpcId": "vpc-3f139646", 
+            "InstanceTenancy": "default", 
+            "Tags": [], 
+            "Ipv6CidrBlockAssociationSet": [], 
+            "State": "pending", 
+            "DhcpOptionsId": "dopt-61079b07", 
+            "CidrBlock": "172.31.0.0/16", 
+            "IsDefault": true
         },
         "myInternetGateway": {
             "Type": "AWS::EC2::InternetGateway",
@@ -58,36 +46,6 @@
 				}
 			}
 		},
-        
-        "pubSubnet2": {
-			"DependsOn": ["myVPC"],
-			"Type": "AWS::EC2::Subnet",
-			"Properties": {
-				"VpcId": {
-					"Ref": "myVPC"
-				},
-				"MapPublicIpOnLaunch": false,
-				"CidrBlock": {
-					"Fn::FindInMap": ["SubnetConfig", "Public", "CIDR"]
-				}
-			}
-		},
-		"privSubnet2": {
-			"DependsOn": ["myVPC", "pubSubnet2"],
-			"Type": "AWS::EC2::Subnet",
-			"Properties": {
-				"VpcId": {
-					"Ref": "myVPC"
-				},
-				"AvailabilityZone": {
-					"Fn::GetAtt": ["pubSubnet2", "AvailabilityZone"]
-				},
-				"MapPublicIpOnLaunch": false,
-				"CidrBlock": {
-					"Fn::FindInMap": ["SubnetConfig", "Private", "CIDR"]
-				}
-			}
-		},
 
         "privRouteTable": {
 			"DependsOn": ["myVPC"],
@@ -100,7 +58,7 @@
 		},
 
         "myElasticLoadBalancing": {
-            "DependsOn": ["myVPC"],
+            "DependsOn": ["myVPC", "pubSubnet1"],
             "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
             "Properties": {
                 "AvailabilityZones" : { "Fn::GetAZs" : "" },
@@ -118,7 +76,8 @@
                     {
                         "SubnetId": {
                             "Ref": "pubSubnet1"
-                        }
+                        },
+                        "DeviceIndex": "0"
                     }
                 ],
                 "ImageId" : "ami-0a313d6098716f372",
@@ -132,8 +91,9 @@
                 "NetworkInterfaces": [
                     {
                         "SubnetId": {
-                            "Ref": "pubSubnet2"
-                        }
+                            "Ref": "pubSubnet1"
+                        },
+                        "DeviceIndex": "0"
                     }
                 ],
                 "ImageId" : "ami-0a313d6098716f372",
@@ -150,6 +110,7 @@
             "Properties": {}
         },
         "myRDSDb": {
+            "DependsOn": ["myVPC", "pubSubnet1"],
             "Type": "AWS::RDS::DBInstance",
             "Properties": {
                 "DBName" : "fileUploadDb",
@@ -158,8 +119,8 @@
                 "Engine" : "MySQL",
                 "MasterUsername" : "userFileUpload",
                 "MasterUserPassword" : "passFileUpload"
-            },
-            "DependsOn": ["myVPC"]
+            }
+            
         },
         "myLambdaExecutionRole": {
           "Type": "AWS::IAM::Role",
@@ -174,22 +135,6 @@
             },
             "ManagedPolicyArns": ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
           }
-        },
-        "myLambda": {
-            "Type": "AWS::Lambda::Function",
-            "Properties": {
-                "Handler": "index.handler",
-                "Role": { "Fn::GetAtt" : ["myLambdaExecutionRole", "Arn"] },
-                "Code": {
-                  "S3Bucket": "lambda-functions",
-                  "S3Key": "amilookup.zip"
-                },
-                "Runtime": "nodejs8.10",
-                "Timeout": 25,
-                "TracingConfig": {
-                  "Mode": "Active"
-               }
-            }
         }
     }
 }
