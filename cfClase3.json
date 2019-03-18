@@ -6,16 +6,19 @@
             "Type": "AWS::EC2::Instance",
             "Properties": {
                 "ImageId" : "ami-0c55b159cbfafe1f0",
-                "KeyName" : "softcarr-key",
-                "InstanceType": "t2.micro"
+                "KeyName" : "myKeyValuePair",
+                "InstanceType": "t2.micro",
+                "SecurityGroupIds":  ["mySecurityGroupEc2"]
+                
             }
         },
         "Ec2Instance2": {
             "Type": "AWS::EC2::Instance",
             "Properties": {
                 "ImageId" : "ami-0c55b159cbfafe1f0",
-                "KeyName" : "softcarr-key",
-                "InstanceType": "t2.micro"
+                "KeyName" : "myKeyValuePair",
+                "InstanceType": "t2.micro",
+                "SecurityGroupIds":  ["mySecurityGroupEc2"]
             }
         },
         "myRDSDb": {
