@@ -1,10 +1,14 @@
 ##------------------------------------------------------------------
-##CREAR ARCHIVO EN CONSOLA 
+## CREAR ARCHIVO EN CONSOLA 
 ## nano run.sh
 ## copiar el contenido a la consola
 ## ctrl+o
 ## enter
 ## ctrl+x
+## -----------------------------------------------------------------
+## EJECUTAR EL ARCHIVO
+## chmod +x run.sh 
+## ./run.sh
 ##------------------------------------------------------------------
 
 
