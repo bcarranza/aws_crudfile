@@ -13,18 +13,12 @@
 
 
 ## RUN APP
-sudo apt install curl
 
 curl -sL https://deb.nodesource.com/setup_10.x | sudo bash -
 
 sudo apt install nodejs
 
 sudo npm install forever -g
-
-## INSTALL GIT
-sudo dnf install git-all
-
-sudo apt install git-all
 
 ## DOWNLOAD PROYECT
 
@@ -38,4 +32,4 @@ npm install
 
 ## ejecutar servicio como demoño
 
-forever start bin/www
+sudo forever start bin/www
