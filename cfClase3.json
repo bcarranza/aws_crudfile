@@ -1,49 +1,70 @@
 {
-    
-    "Resources": {  
-        
-        "Ec2Instance1": {
-            "Type": "AWS::EC2::Instance",
-            "Properties": {
-                "ImageId" : "ami-0c55b159cbfafe1f0",
-                "KeyName" : "myKeyValuePair",
-                "InstanceType": "t2.micro",
-                "SecurityGroupIds":  ["mySecurityGroupEc2"]
-                
-            }
+  "Resources": {
+    "Ec2Instance1": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "ImageId": "ami-0c55b159cbfafe1f0",
+        "KeyName": "myKeyValuePair",
+        "InstanceType": "t2.micro",
+        "SecurityGroupIds": ["mySecurityGroupEc2"],
+        "Tags": [
+          {
+            "Key": "name",
+            "Value": "Ec2Instance1"
+          }
+        ]
+      }
+    },
+    "Ec2Instance2": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "ImageId": "ami-0c55b159cbfafe1f0",
+        "KeyName": "myKeyValuePair",
+        "InstanceType": "t2.micro",
+        "SecurityGroupIds": ["mySecurityGroupEc2"],
+        "Tags": [
+          {
+            "Key": "name",
+            "Value": "Ec2Instance1"
+          }
+        ]
+      }
+    },
+    "myRDSDb": {
+      "Type": "AWS::RDS::DBInstance",
+      "Properties": {
+        "DBName": "fileUploadDb",
+        "AllocatedStorage": "20",
+        "DBInstanceClass": "db.t3.micro",
+        "Engine": "MySQL",
+        "MasterUsername": "userFileUpload",
+        "MasterUserPassword": "passFileUpload"
+      }
+    },
+    "myElasticLoadBalancing": {
+      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties": {
+        "AvailabilityZones": { "Fn::GetAZs": "" },
+        "Instances": [{ "Ref": "Ec2Instance1" }, { "Ref": "Ec2Instance2" }],
+        "Listeners": [
+          {
+            "LoadBalancerPort": "80",
+            "InstancePort": "80",
+            "Protocol": "HTTP"
+          }
+        ],
+        "HealthCheck": {
+          "Target": "HTTP:80/",
+          "HealthyThreshold": "3",
+          "UnhealthyThreshold": "5",
+          "Interval": "30",
+          "Timeout": "5"
         },
-        "Ec2Instance2": {
-            "Type": "AWS::EC2::Instance",
-            "Properties": {
-                "ImageId" : "ami-0c55b159cbfafe1f0",
-                "KeyName" : "myKeyValuePair",
-                "InstanceType": "t2.micro",
-                "SecurityGroupIds":  ["mySecurityGroupEc2"]
-            }
-        },
-        "myRDSDb": {
-            "Type": "AWS::RDS::DBInstance",
-            "Properties": {
-                "DBName" : "fileUploadDb",
-                "AllocatedStorage" : "20",
-                "DBInstanceClass" : "db.t3.micro",
-                "Engine" : "MySQL",
-                "MasterUsername" : "userFileUpload",
-                "MasterUserPassword" : "passFileUpload"
-            }
-        },
-        "myElasticLoadBalancing": {
-            
-            "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
-            "Properties": {
-                "AvailabilityZones" : { "Fn::GetAZs" : "" },
-                "Instances" : [ { "Ref" : "Ec2Instance1" },{ "Ref" : "Ec2Instance2" } ],
-                "Listeners": [{
-                    "LoadBalancerPort": "80",
-                    "InstancePort": "80",
-                    "Protocol": "HTTP"
-                }]
-            }
+        "ConnectionDrainingPolicy": {
+          "Enabled": "true",
+          "Timeout": "60"
         }
+      }
     }
+  }
 }
