@@ -12,7 +12,25 @@
             "Key": "name",
             "Value": "Ec2Instance1"
           }
-        ]
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash -xe\n",
+                "echo INSTALAR NODE JS \n",
+                "curl -sL https://deb.nodesource.com/setup_10.x | sudo bash - \n",
+                "sudo apt -y install nodejs \n",
+                "sudo npm install forever -g \n",
+                "git clone https://github.com/MiguelYax/image-warehouse.git \n",
+                "cd image-warehouse \n",
+                "sudo npm install \n",
+                "sudo forever start bin/www \n"
+              ]
+            ]
+          }
+        }
       }
     },
     "Ec2Instance2": {
@@ -27,7 +45,25 @@
             "Key": "name",
             "Value": "Ec2Instance1"
           }
-        ]
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash -xe\n",
+                "echo INSTALAR NODE JS \n",
+                "curl -sL https://deb.nodesource.com/setup_10.x | sudo bash - \n",
+                "sudo apt -y install nodejs \n",
+                "sudo npm install forever -g \n",
+                "git clone https://github.com/MiguelYax/image-warehouse.git \n",
+                "cd image-warehouse \n",
+                "sudo npm install \n",
+                "sudo forever start bin/www \n"
+              ]
+            ]
+          }
+        }
       }
     },
     "myRDSDb": {
